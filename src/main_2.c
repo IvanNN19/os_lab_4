@@ -2,52 +2,60 @@
 #include <dlfcn.h>
 
 int main(){
-    int a, b, n, i, k = 0;
+    int a, b, n, num_lib = 1, k = 0;
+    float x;
+    void *lib; 
 
-    void *lib_evklid;
-    void *lib_E;
-    int (*func_evklid)(int x, int y);
-    float (*func_E)(int z);
-
-    while(1){
-        printf("Выбор контракта(выход: -1): ");
-        scanf("%d", &i);//=1
-        if(i == -1){break;}
-        if(i == 0){ k = (k+1)%2;}
-
-        switch (k)
-        {
-        case(0): //evklid
-        printf("Введите 2 числа:\n");
-        scanf("%d%d", &a, &b);
-        lib_evklid = dlopen("libEvklid.so", RTLD_LAZY);//RTLD_LAZY, подразумевающим разрешение неопределенных символов в виде кода, содержащегося в исполняемой динамической библиотеке
-        if (!lib_evklid){
-		    //если ошибка, то вывести ее на экран
-		    fprintf(stderr, "dlopen() error: %s\n", dlerror());
-		    return 1;
-	    }
-        func_evklid = dlsym(lib_evklid, "gcf");
-        printf("ans_1 = %d\n", (*func_evklid)(a, b));
-        dlclose(lib_evklid);
-        break;
-        
-        case(1): //E
-        printf("Введите число:\n");
-        scanf("%d", &n);
-        lib_E = dlopen("libCalculateE.so", RTLD_LAZY);
-        if (!lib_E){
-            //если ошибка, то вывести ее на экран
-            fprintf(stderr, "dlopen() error: %s\n", dlerror());
-            return 1;
-        }
-        func_E = dlsym(lib_E, "calculateE");
-        printf("ans_2 = %lf\n", (*func_E)(n));
-        dlclose(lib_E);
-        break;
-
-        }
+    lib = dlopen("libLIB1.so", RTLD_LAZY);
+    if (!lib){ //если ошибка, то вывести ее на экран
+        fprintf(stderr, "dlopen() error: %s\n", dlerror());
+        return 1;
     }
 
+    printf("номер команды(для завершения -1): ");
+    scanf("%d", &n);
+    while(n != -1){
+        switch (n){
+            case(0): //smena
+                dlclose(lib);
+                switch(num_lib){
+                    case(1):
+                        printf("перешли во 2й контракт\n");
+                        num_lib = 2;
+                        lib = dlopen("libLIB2.so", RTLD_LAZY);
+                        break;
+                    case(2):
+                        printf("перешли в 1й контракт\n");
+                        num_lib = 1;
+                        lib = dlopen("libLIB1.so", RTLD_LAZY);
+                        break;
+                }
+                printf("номер команды(для завершения -1): ");
+                scanf("%d", &n);
+                break;
+            case(1):
+                printf("GCF:\n");
+                scanf("%d%d", &a, &b);
+                int (*func_gcf)(int a, int b);
+                func_gcf = dlsym(lib, "gcf");
+                printf("результат: %d\n", (*func_gcf)(a, b));
+                printf("номер команды(для завершения -1): ");
+                scanf("%d", &n);
+                break;
+            case(2):
+                printf("E:\n");
+                scanf("%f", &x);
+                float (*func_E)(float x);
+                func_E = dlsym(lib, "calculateE");
+                printf("результат: %f\n", (*func_E)(x));
+                printf("номер команды(для завершения -1): ");
+                scanf("%d", &n);
+                break;
+            default:
+                break;
+        }
+    }
+    dlclose(lib);
 
     return 0;
 }
